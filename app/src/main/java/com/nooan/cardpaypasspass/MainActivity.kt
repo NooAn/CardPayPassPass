@@ -19,7 +19,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
             R.id.navigation_emulator_main -> {
-                startFragmentTransaction(EmulatorMainFragment.newInstance())
+                startFragmentTransaction(EmulatorTerminalMainFragment.newInstance())
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_logs -> {
