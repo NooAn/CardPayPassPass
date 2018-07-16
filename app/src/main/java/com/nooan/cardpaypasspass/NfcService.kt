@@ -30,26 +30,40 @@ class NfcService : HostApduService() {
 
 private val HEX_CHARS = "0123456789ABCDEF"
 
-fun hexStringToByteArray(data: String): ByteArray {
+fun String.hexToByteArray2(): ByteArray {
 
-    val result = ByteArray(data.length / 2)
+    val result = ByteArray(this.length / 2)
 
-    for (i in 0 until data.length step 2) {
-        val firstIndex = HEX_CHARS.indexOf(data[i]);
-        val secondIndex = HEX_CHARS.indexOf(data[i + 1]);
+    for (i in 0 until this.length step 2) {
+        val firstIndex = HEX_CHARS.indexOf(this[i]);
+        val secondIndex = HEX_CHARS.indexOf(this[i + 1]);
 
         val octet = firstIndex.shl(4).or(secondIndex)
         result.set(i.shr(1), octet.toByte())
     }
+    return result
+}
 
+fun String.hexToByteArray(): ByteArray {
+
+    val hexbytes = this.replace(" ", "")
+    val result = ByteArray(hexbytes.length / 2)
+
+    for (i in 0 until hexbytes.length step 2) {
+        val firstIndex = HEX_CHARS.indexOf(hexbytes[i]);
+        val secondIndex = HEX_CHARS.indexOf(hexbytes[i + 1]);
+
+        val octet = firstIndex.shl(4).or(secondIndex)
+        result.set(i.shr(1), octet.toByte())
+    }
     return result
 }
 
 private val HEX_CHARS_ARRAY = "0123456789ABCDEF".toCharArray()
-fun toHex(byteArray: ByteArray): String {
+fun ByteArray.toHex(): String {
     val result = StringBuffer()
 
-    byteArray.forEach {
+    this.forEach {
         val octet = it.toInt()
         val firstIndex = (octet and 0xF0).ushr(4)
         val secondIndex = octet and 0x0F

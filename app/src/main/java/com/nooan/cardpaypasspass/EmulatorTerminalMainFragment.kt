@@ -8,12 +8,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.fragment_emulator_terminal.*
-import android.app.PendingIntent
-import android.nfc.tech.NfcA
-import android.nfc.tech.IsoDep
-import android.nfc.NfcAdapter
-import android.nfc.Tag
-import android.content.Intent
 
 
 private const val ARG_PARAM1 = "param1"
@@ -23,11 +17,7 @@ class EmulatorTerminalMainFragment : Fragment() {
     private var param1: String? = null
     private var param2: String? = null
     private var listener: OnFragmentInteractionListener? = null
-    private lateinit var nfcAdapter: NfcAdapter                                                              /*!< represents the local NFC adapter */
-    private val tag: Tag? = null                                                                            /*!< represents an NFC tag that has been discovered */
-    private val tagcomm: IsoDep? = null                                                                     /*!< provides access to ISO-DEP (ISO 14443-4) properties and I/O operations on a Tag */
-    private val nfctechfilter = arrayOf(arrayOf(NfcA::class.java.name))      /*!<  NFC tech lists */
-    private var nfcintent: PendingIntent? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,17 +34,18 @@ class EmulatorTerminalMainFragment : Fragment() {
         return view
     }
 
+    private var statusRead: Boolean = false
+
     private fun initView() {
-        nfcAdapter = NfcAdapter.getDefaultAdapter(activity)
-        nfcintent = PendingIntent.getActivity(activity, 0, Intent(activity, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0)
+        statusRead = false
         btnRead.setOnClickListener {
             txReading.visibility = View.VISIBLE
-            nfcAdapter.enableForegroundDispatch(activity, nfcintent, null, nfctechfilter)
+            listener?.onClickReadCard(statusRead)
+            statusRead = !statusRead
         }
     }
 
     fun onButtonPressed(uri: Uri) {
-        listener?.onFragmentInteraction(uri)
     }
 
     override fun onAttach(context: Context) {
