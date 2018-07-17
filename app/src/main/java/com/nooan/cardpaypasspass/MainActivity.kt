@@ -131,43 +131,43 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
     private fun readCardMChip() {
         try {
-            var temp: String
-
             val unixTime = System.currentTimeMillis() / 1000L
             val filename = unixTime.toString() + "-MChip.card"
-
-            var response = executor(Commands.SELECT_PPSE) //Get PPSE
             appendLog("MChip", filename)
+
+            var response = execute(Commands.SELECT_PPSE) //Get PPSE
             appendLog((response.toHex()), filename)
 
-            temp = "00 A4 04 00 07"
-            temp += (response.toHex()).substring(80, 102)
-            temp += "00"
-
-            response = executor(temp)  //SELECT Command
+            response = execute(Commands.SELECT_APPLICATION.apply {
+                Nc = response.toHex().substring(80, 102)
+                SW1WS2 = "00"
+            })
             appendLog((response.toHex()), filename)
 
-
-            response = executor("80 A8 00 00 02 83 00 00")  //Get Processing Options
+            response = execute(Commands.GET_PROCESSING_OPTIONS)  //Get Processing Options
             appendLog((response.toHex()), filename)
 
-            response = executor("00 B2 01 14 00 00")   //Read Record1
+            response = execute(Commands.READ_RECORD_1)   //Read Record1
             appendLog((response.toHex()), filename)
 
-            response = executor("00 B2 01 1C 00 00")   //Read Record2
+            response = execute(Commands.READ_RECORD_2)   //Read Record2
             appendLog((response.toHex()), filename)
 
-            response = executor("00 B2 01 24 00 00")   //Read Record3
+            response = execute(Commands.READ_RECORD_3)   //Read Record3
             appendLog((response.toHex()), filename)
 
-            response = executor("00 B2 02 24 00 00")   //Read Record4
+            response = execute(Commands.READ_RECORD_4)   //Read Record4
             appendLog((response.toHex()), filename)
 
-
-            response = executor("80 AE 50 00 2B 00 00 00 00 00 00 00 00 00 00 00 00 00 56 00 00 00 00 00 09 78 17 06 21 00 51 33 05 49 22 00 00 00 00 00 00 00 00 00 00 1F 03 02 00")   //Generate AC
+            response = execute(Command().apply {
+                CLA = "80"
+                INS = "AE"
+                P1 = "50"
+                P2 = "00"
+                Lc = "2B"
+                Nc = "00 00 00 00 00 00 00 00 00 00 00 00 00 56 00 00 00 00 00 09 78 17 06 21 00 51 33 05 49 22 00 00 00 00 00 00 00 00 00 00 1F 03 02 00"
+            })   //Generate ACs
             appendLog((response.toHex()), filename)
-
-
             Log.i("EMVemulator", "Done!")
 
         } catch (e: IOException) {
@@ -176,6 +176,8 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
         }
 
     }
+
+    protected fun toMagStripeMode() = "77 0A 82 02 00 00 94 04 08 01 01 00 90 00"
 
     private fun readCardMagStripe() {
 
@@ -184,51 +186,49 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
             val unixTime = System.currentTimeMillis() / 1000L
             val filename = unixTime.toString() + "MagStripe.card"
-
-            var recv = executor("00 A4 04 00 0E 32 50 41 59 2E 53 59 53 2E 44 44 46 30 31 00")
             appendLog("MagStripe", filename)
-            appendLog(recv.toHex(), filename)
-            temp = "00 A4 04 00 07"
-            temp += recv.toHex().substring(80, 102)
-            temp += "00"
-            var cardtype: String = "";
-            if (temp.matches("00 A4 04 00 07 A0 00 00 00 04 10 10 00".toRegex()))
-                cardtype = "MasterCard"
-            if (temp.matches("00 A4 04 00 07 A0 00 00 00 03 20 10 00".toRegex()))
-                cardtype = "Visa Electron"
-            if (temp.matches("00 A4 04 00 07 A0 00 00 00 03 10 10 00".toRegex()))
-                cardtype = "Visa"
-            recv = executor(temp)
 
-            appendLog((recv.toHex()), filename)
+            var response = execute(Commands.SELECT_PPSE)
+            appendLog((response.toHex()), filename)
 
-            // appendLog(toMagStripeMode(), filename)
-            recv = executor("00 B2 01 0C 00")
+            val select = Commands.SELECT_APPLICATION.apply {
+                Nc = response.toHex().substring(80, 102)
+                SW1WS2 = "00"
+            }
+            val cardtype: String = getTypeCard(select.split())
 
-            appendLog((recv.toHex()), filename)
+            response = execute(select)
+            appendLog((response.toHex()), filename)
+            appendLog(toMagStripeMode(), filename)
+            response = execute(Commands.READ_RECORD_1.apply {
+                P2 = "0C"
+                Lc = "00"
+                Nc = ""
+            })
+
+            appendLog((response.toHex()), filename)
             var cardnumber: String = "";
             var cardexpiration = ""
             if (cardtype === "MasterCard") {
-                cardnumber = "Card number: " + String(Arrays.copyOfRange(recv, 28, 44))
-                cardexpiration = "Card expiration: " + String(Arrays.copyOfRange(recv, 50, 52)) + "/" + String(Arrays.copyOfRange(recv, 48, 50))
+                cardnumber = "Card number: " + String(Arrays.copyOfRange(response, 28, 44))
+                cardexpiration = "Card expiration: " + String(Arrays.copyOfRange(response, 50, 52)) + "/" + String(Arrays.copyOfRange(response, 48, 50))
 
                 for (i in 0..999) {
-                    recv = executor("80 A8 00 00 02 83 00 00")
-                    temp = "802A8E800400000"
-                    temp += String.format("%03d", i)
-                    temp += "00"
-                    temp = temp.replace("..(?!$)".toRegex(), "$0 ")
-                    recv = executor(temp)
+                    response = execute(Commands.GET_PROCESSING_OPTIONS)
+                    response = execute(Commands.COMPUTE_CRYPTOGRAPHIC_CHECKSUM.apply {
+                        Lc = "04"
+                        Nc = "00000${String.format("%03d", i)}00".replace("..(?!$)".toRegex(), "$0 ")
+                    })
 
-                    appendLog((recv.toHex()), filename)
+                    appendLog((response.toHex()), filename)
+                    Log.i("EMVemulator", "Count:" + i.toString())
                     if (i % 1 == 0) {
-                        Log.i("EMVemulator", "Count:" + i.toString())
                     }
                 }
             }
             if (cardtype === "Visa" || cardtype === "Visa Electron") {
-                cardnumber = "Card number: " + (recv.toHex()).substring(12, 36).replace(" ", "")
-                cardexpiration = "Card expiration: " + (recv.toHex()).substring(40, 43).replace(" ", "") + "/" + recv.toHex().substring(37, 40).replace(" ", "")
+                cardnumber = "Card number: " + (response.toHex()).substring(12, 36).replace(" ", "")
+                cardexpiration = "Card expiration: " + (response.toHex()).substring(40, 43).replace(" ", "") + "/" + response.toHex().substring(37, 40).replace(" ", "")
             }
 
             Log.i("EMVemulator", "Done!")
@@ -240,8 +240,19 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
     }
 
+    private fun getTypeCard(response: ByteArray): String {
+        var cardtype: String = "";
+        if (response.toHex().matches("00 A4 04 00 07 A0 00 00 00 04 10 10 00".toRegex()))
+            cardtype = "MasterCard"
+        if (response.toHex().matches("00 A4 04 00 07 A0 00 00 00 03 20 10 00".toRegex()))
+            cardtype = "Visa Electron"
+        if (response.toHex().matches("00 A4 04 00 07 A0 00 00 00 03 10 10 00".toRegex()))
+            cardtype = "Visa"
+        return cardtype
+    }
+
     @Throws(IOException::class)
-    protected fun executor(command: Command): ByteArray {
+    protected fun execute(command: Command): ByteArray {
         val bytes = command.split()
         Log.i("EMVemulator", "Send: " + (bytes.toHex()))
         val recv = tagcomm.transceive(bytes)

@@ -27,5 +27,19 @@ data class Command(
 
 object Commands {
     val SELECT_PPSE = Command(CLA = "00", INS = "A4", P1 = "04", P2 = "00", Lc = "0E", Nc = "32 50 41 59 2E 53 59 53 2E 44 44 46 30 31 00")
-    val SELECT_APPLICATION = Command(CLA = "00", INS = "A4", P1 = "04", P2 = "00")
+
+    val SELECT_APPLICATION = Command(CLA = "00", INS = "A4", P1 = "04", P2 = "00", Nc = "07")
+
+    val GET_PROCESSING_OPTIONS = Command(CLA = "80", INS = "A8", P1 = "00", P2 = "00", Lc = "02", Nc = "83 00", Le = "00")
+
+    val READ_RECORD_1 = Command(CLA = "00", INS = "B2", P1 = "01", P2 = "14", Lc = "00", Le = "00")
+
+    val READ_RECORD_2 = Command(CLA = "00", INS = "B2", P1 = "01", P2 = "1C", Lc = "00", Le = "00")
+
+    val READ_RECORD_3 = Command(CLA = "00", INS = "B2", P1 = "01", P2 = "24", Lc = "00", Le = "00")
+
+    val READ_RECORD_4 = Command(CLA = "00", INS = "B2", P1 = "02", P2 = "24", Lc = "00", Le = "00")
+
+    val COMPUTE_CRYPTOGRAPHIC_CHECKSUM = Command(CLA = "80", INS = "20", P1 = "8E", P2="80",Le = "00")
+
 }
