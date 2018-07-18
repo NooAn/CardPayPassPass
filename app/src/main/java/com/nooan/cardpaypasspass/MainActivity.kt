@@ -1,5 +1,6 @@
 package com.nooan.cardpaypasspass
 
+import android.Manifest
 import android.app.PendingIntent
 import android.content.Intent
 import android.nfc.NfcAdapter
@@ -18,6 +19,13 @@ import java.util.*
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
+import androidx.core.app.ActivityCompat
+import android.content.pm.PackageManager
+import android.os.Build
+import android.widget.Toast
+import androidx.fragment.app.FragmentTransaction
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.android.UI
 
 
 interface OnFragmentInteractionListener {
@@ -25,24 +33,23 @@ interface OnFragmentInteractionListener {
 }
 
 class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
-    private lateinit var nfcAdapter: NfcAdapter                                                  /*!< represents the local NFC adapter */
+    private var nfcAdapter: NfcAdapter? = null                                                  /*!< represents the local NFC adapter */
     private var tag: Tag? = null                                                                 /*!< represents an NFC tag that has been discovered */
     private lateinit var tagcomm: IsoDep                                                         /*!< provides access to ISO-DEP (ISO 14443-4) properties and I/O operations on a Tag */
     private val nfctechfilter = arrayOf(arrayOf(NfcA::class.java.name))      /*!<  NFC tech lists */
     private var nfcintent: PendingIntent? = null
 
     override fun onClickReadCard(statusRead: Boolean) {
-        nfcAdapter.enableForegroundDispatch(this, nfcintent, null, nfctechfilter)
         changeState(statusRead)
     }
 
     fun changeState(statusRead: Boolean) {
         if (!statusRead) {
-            //readCard.setText("Stop read")
-            nfcAdapter.enableForegroundDispatch(this, nfcintent, null, nfctechfilter)
+            (supportFragmentManager.findFragmentByTag(ReaderFragment.TAG) as ReaderFragment).startRead()
+            nfcAdapter?.enableForegroundDispatch(this, nfcintent, null, nfctechfilter)
         } else {
-            // readCard.setText("Read card")
-            nfcAdapter.disableReaderMode(this)
+            (supportFragmentManager.findFragmentByTag(ReaderFragment.TAG) as ReaderFragment).stopRead()
+            nfcAdapter?.disableReaderMode(this)
         }
     }
 
@@ -55,7 +62,31 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
         }
     }
 
-    private var error = "Error"
+    private fun test() {
+        var text: String = "";
+        runBlocking {
+            async {
+                val deferred = (1..100).map { n ->
+                    delay(100)
+                    launch(UI) {
+                        text += "\n $n"
+                        Log.e("LOG", "s: $n")
+                        showLogs(text)
+                    }
+                }
+            }.await()
+
+        }
+    }
+
+    private fun showLogs(text: String) {
+        val fragment = supportFragmentManager.findFragmentByTag(ReaderFragment.TAG)
+        if (fragment != null) {
+            (fragment as ReaderFragment).showLogs(text)
+        }
+    }
+
+    private var error = ""
     //fixme asynchronisly
     private fun cardReading(tag: Tag?) {
 
@@ -66,15 +97,20 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
         } catch (e: IOException) {
             Log.e("EMVemulator", "Error tagcomm: " + e.message)
             error = "Reading card data ... Error tagcomm: " + e.message
+            Toast.makeText(applicationContext, error, Toast.LENGTH_SHORT).show()
             return
         }
 
         try {
-            readCardMagStripe()
+            if (mChip)
+                readCardMChip()
+            else
+                readCardMagStripe()
             tagcomm.close()
         } catch (e: IOException) {
             Log.e("EMVemulator", "Error tranceive: " + e.message)
             error = "Reading card data ... Error tranceive: " + e.message
+            Toast.makeText(applicationContext, error, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -84,15 +120,15 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
         when (item.itemId) {
             R.id.navigation_emulator_main -> {
-                startFragmentTransaction(EmulatorTerminalMainFragment.newInstance())
+                fragmentTransaction(ReaderFragment.newInstance(), ReaderFragment.TAG)
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_logs -> {
-                startFragmentTransaction(LogsFragment.newInstance())
+                fragmentTransaction(LogsFragment.newInstance(), LogsFragment.TAG)
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_reads -> {
-                startFragmentTransaction(ReadFileFragment.newInstance())
+                fragmentTransaction(ReadFileFragment.newInstance(), ReadFileFragment.TAG)
                 return@OnNavigationItemSelectedListener true
             }
         }
@@ -101,10 +137,12 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        isStoragePermissionGranted();
         setContentView(R.layout.activity_main)
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
         nfcintent = PendingIntent.getActivity(this, 0, Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0)
+        fragmentTransaction(ReaderFragment.newInstance(), ReaderFragment.TAG)
     }
 
     fun appendLog(text: String, filename: String) {
@@ -115,7 +153,6 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             } catch (e: IOException) {
                 e.printStackTrace()
             }
-
         }
         try {
             //BufferedWriter for performance, true to set append to file flag
@@ -128,35 +165,55 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
         }
     }
 
+    fun isStoragePermissionGranted(): Boolean {
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (checkSelfPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                Log.v("LOG", "Permission is granted")
+                return true
+            } else {
+
+                Log.v("LOG", "Permission is revoked")
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE), 1)
+                return false
+            }
+        } else {
+            Log.v("LOG", "Permission is granted")
+            return true
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Log.v("LOG", "Permission: " + permissions[0] + "was " + grantResults[0])
+        }
+    }
+
+    val unixTime = System.currentTimeMillis() / 1000L
+    val filename = unixTime.toString() + "-MChip.card"
+    var mChip: Boolean = false
+
     private fun readCardMChip() {
         try {
-            val unixTime = System.currentTimeMillis() / 1000L
-            val filename = unixTime.toString() + "-MChip.card"
+
             appendLog("MChip", filename)
 
             var response = execute(Commands.SELECT_PPSE) //Get PPSE
-            appendLog((response.toHex()), filename)
 
             response = execute(Commands.SELECT_APPLICATION.apply {
                 Nc = response.toHex().substring(80, 102)
                 SW1WS2 = "00"
             })
-            appendLog((response.toHex()), filename)
 
             response = execute(Commands.GET_PROCESSING_OPTIONS)  //Get Processing Options
-            appendLog((response.toHex()), filename)
 
             response = execute(Commands.READ_RECORD_1)   //Read Record1
-            appendLog((response.toHex()), filename)
 
             response = execute(Commands.READ_RECORD_2)   //Read Record2
-            appendLog((response.toHex()), filename)
 
             response = execute(Commands.READ_RECORD_3)   //Read Record3
-            appendLog((response.toHex()), filename)
 
             response = execute(Commands.READ_RECORD_4)   //Read Record4
-            appendLog((response.toHex()), filename)
 
             response = execute(Command().apply {
                 CLA = "80"
@@ -166,9 +223,6 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
                 Lc = "2B"
                 Nc = "00 00 00 00 00 00 00 00 00 00 00 00 00 56 00 00 00 00 00 09 78 17 06 21 00 51 33 05 49 22 00 00 00 00 00 00 00 00 00 00 1F 03 02 00"
             })   //Generate ACs
-            appendLog((response.toHex()), filename)
-            Log.i("EMVemulator", "Done!")
-
         } catch (e: IOException) {
             Log.i("EMVemulator", "Error readCard: " + e.message)
             error = "Reading card data ... Error readCard: " + e.message
@@ -181,14 +235,11 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
     private fun readCardMagStripe() {
 
         try {
-            var temp: String
-
             val unixTime = System.currentTimeMillis() / 1000L
             val filename = unixTime.toString() + "MagStripe.card"
             appendLog("MagStripe", filename)
 
             var response = execute(Commands.SELECT_PPSE)
-            appendLog((response.toHex()), filename)
 
             val select = Commands.SELECT_APPLICATION.apply {
                 Nc = response.toHex().substring(80, 102)
@@ -197,15 +248,12 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             val cardtype: String = getTypeCard(select.split())
 
             response = execute(select)
-            appendLog((response.toHex()), filename)
             appendLog(toMagStripeMode(), filename)
             response = execute(Commands.READ_RECORD_1.apply {
                 P2 = "0C"
                 Lc = "00"
                 Nc = ""
             })
-
-            appendLog((response.toHex()), filename)
             var cardnumber: String = "";
             var cardexpiration = ""
             if (cardtype === "MasterCard") {
@@ -213,7 +261,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
                 cardexpiration = "Card expiration: " + String(Arrays.copyOfRange(response, 50, 52)) + "/" + String(Arrays.copyOfRange(response, 48, 50))
 
                 for (i in 0..999) {
-                    response = execute(Commands.GET_PROCESSING_OPTIONS)
+                    response = execute(Commands.GET_PROCESSING_OPTIONS, false)
                     response = execute(Commands.COMPUTE_CRYPTOGRAPHIC_CHECKSUM.apply {
                         Lc = "04"
                         Nc = "00000${String.format("%03d", i)}00".replace("..(?!$)".toRegex(), "$0 ")
@@ -251,17 +299,42 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
     }
 
     @Throws(IOException::class)
-    protected fun execute(command: Command): ByteArray {
+    protected fun execute(command: Command, log: Boolean = true): ByteArray {
         val bytes = command.split()
-        Log.i("EMVemulator", "Send: " + (bytes.toHex()))
+        val sending = "Sent: " + bytes.toHex()
+        Log.i("EMVemulator", sending)
+        showLogs(sending)
+
         val recv = tagcomm.transceive(bytes)
-        Log.i("EMVemulator", "Received: " + (recv.toHex()))
+        val received = "Received: " + recv.toHex()
+        Log.i("EMVemulator", received)
+        showLogs(received)
+        if (log) appendLog((recv.toHex()), filename)
         return recv
     }
 
-    private fun startFragmentTransaction(fragment: Fragment) {
-        supportFragmentManager.beginTransaction()
-                .replace(R.id.mainFrame, fragment)
-                .commit()
+    private var oldScreen = ""
+    private fun fragmentTransaction(newFragment: Fragment, tag: String? = null) {
+        val fragment = supportFragmentManager.findFragmentByTag(tag)
+        val transaction = createDetachTransaction(oldScreen)
+        oldScreen = tag ?: ""
+        if (fragment == null)
+            supportFragmentManager.beginTransaction()
+                    .add(R.id.mainFrame, newFragment, tag)
+                    .addToBackStack(tag)
+                    .commit()
+        else {
+            transaction.attach(fragment)
+            transaction.commit()
+        }
+    }
+
+    private fun createDetachTransaction(tag: String?): FragmentTransaction {
+        var fragmentTransaction = supportFragmentManager.beginTransaction()
+        val fragment = supportFragmentManager.findFragmentByTag(tag)
+        if (fragment != null) {
+            fragmentTransaction = fragmentTransaction.detach(fragment)
+        }
+        return fragmentTransaction
     }
 }

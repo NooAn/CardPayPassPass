@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import kotlinx.android.synthetic.main.fragment_logs.*
 
 
 private const val ARG_PARAM1 = "param1"
@@ -48,6 +49,7 @@ class LogsFragment : Fragment() {
     }
 
     companion object {
+        val TAG: String = "LogsFragment"
 
         @JvmStatic
         fun newInstance(param1: String = "", param2: String = "") =

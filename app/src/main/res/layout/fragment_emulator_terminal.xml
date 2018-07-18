@@ -4,8 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#fff"
     android:padding="16dp"
-    tools:context=".EmulatorTerminalMainFragment">
+    tools:context=".ReaderFragment">
 
     <TextView
         android:id="@+id/textTitle"
@@ -13,12 +14,21 @@
         android:layout_height="wrap_content"
         android:text="Terminal" />
 
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Chip"
+        android:id="@+id/checkboxChip"
+        app:layout_constraintHorizontal_bias="0.2"
+        app:layout_constraintLeft_toRightOf="@id/textTitle"
+        app:layout_constraintRight_toLeftOf="parent" />
+
     <TextView
+        android:id="@+id/txReading"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="reading..."
         android:visibility="gone"
-        android:id="@+id/txReading"
         app:layout_constraintBottom_toTopOf="@id/btnRead"
         app:layout_constraintTop_toBottomOf="@id/textTitle"
         app:layout_constraintVertical_bias="0.05" />
@@ -29,6 +39,19 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="READ"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/txReading" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/btnRead">
+
+        <TextView
+            android:id="@+id/tvLogs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="00 00 00 00" />
+    </ScrollView>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

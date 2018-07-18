@@ -1,5 +1,6 @@
 package com.nooan.cardpaypasspass
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
@@ -13,7 +14,8 @@ import kotlinx.android.synthetic.main.fragment_emulator_terminal.*
 private const val ARG_PARAM1 = "param1"
 private const val ARG_PARAM2 = "param2"
 
-class EmulatorTerminalMainFragment : Fragment() {
+class ReaderFragment : Fragment() {
+
     private var param1: String? = null
     private var param2: String? = null
     private var listener: OnFragmentInteractionListener? = null
@@ -30,8 +32,12 @@ class EmulatorTerminalMainFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.fragment_emulator_terminal, container, false)
-        initView()
         return view
+    }
+
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        initView()
     }
 
     private var statusRead: Boolean = false
@@ -43,9 +49,9 @@ class EmulatorTerminalMainFragment : Fragment() {
             listener?.onClickReadCard(statusRead)
             statusRead = !statusRead
         }
-    }
-
-    fun onButtonPressed(uri: Uri) {
+        checkboxChip.setOnClickListener {
+            (activity as MainActivity).mChip = checkboxChip.isChecked
+        }
     }
 
     override fun onAttach(context: Context) {
@@ -62,11 +68,25 @@ class EmulatorTerminalMainFragment : Fragment() {
         listener = null
     }
 
-    companion object {
+    @SuppressLint("SetTextI18n")
+    fun startRead() {
+        btnRead.text = "STOP READ"
+    }
 
+    @SuppressLint("SetTextI18n")
+    fun stopRead() {
+        btnRead.text = "READ"
+    }
+
+    fun showLogs(text: String) {
+        tvLogs.text = text
+    }
+
+    companion object {
+        val TAG = "READER"
         @JvmStatic
         fun newInstance(param1: String = "", param2: String = "") =
-                EmulatorTerminalMainFragment().apply {
+                ReaderFragment().apply {
                     arguments = Bundle().apply {
                         putString(ARG_PARAM1, param1)
                         putString(ARG_PARAM2, param2)

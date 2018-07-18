@@ -59,8 +59,10 @@ class ReadFileFragment : Fragment() {
     }
 
     companion object {
+        val TAG: String = "ReadFile"
+
         @JvmStatic
-        fun newInstance(param1: String="", param2: String="") =
+        fun newInstance(param1: String = "", param2: String = "") =
                 ReadFileFragment().apply {
                     arguments = Bundle().apply {
                         putString(ARG_PARAM1, param1)
