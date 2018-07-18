@@ -31,7 +31,6 @@ class LogsFragment : Fragment() {
     }
 
     fun onButtonPressed(uri: Uri) {
-        listener?.onFragmentInteraction(uri)
     }
 
     override fun onAttach(context: Context) {

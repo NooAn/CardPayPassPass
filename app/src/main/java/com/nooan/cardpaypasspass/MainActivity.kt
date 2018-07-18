@@ -126,7 +126,6 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
         } catch (e: IOException) {
             e.printStackTrace()
         }
-
     }
 
     private fun readCardMChip() {
