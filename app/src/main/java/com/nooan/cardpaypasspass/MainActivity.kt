@@ -3,29 +3,27 @@ package com.nooan.cardpaypasspass
 import android.Manifest
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.IsoDep
 import android.nfc.tech.NfcA
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
-import kotlinx.android.synthetic.main.activity_main.*
 import android.os.Environment
-import java.io.IOException
-import java.util.*
+import android.util.Log
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentTransaction
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.android.synthetic.main.activity_main.*
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
-import androidx.core.app.ActivityCompat
-import android.content.pm.PackageManager
-import android.os.Build
-import android.widget.Toast
-import androidx.fragment.app.FragmentTransaction
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.android.UI
+import java.io.IOException
+import java.util.*
 
 
 interface OnFragmentInteractionListener {
@@ -63,26 +61,26 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
     }
 
     private fun test() {
-        var text: String = "";
-        runBlocking {
-            async {
-                val deferred = (1..100).map { n ->
-                    delay(100)
-                    launch(UI) {
-                        text += "\n $n"
-                        Log.e("LOG", "s: $n")
-                        showLogs(text)
-                    }
-                }
-            }.await()
-
-        }
+//        runBlocking {
+//            async {
+//                val deferred = (1..100).map { n ->
+//                    delay(100)
+//                    launch(UI) {
+//                        text += "\n $n"
+//                        Log.e("LOG", "s: $n")
+//                        showLogs(text)
+//                    }
+//                }
+//            }.await()
+//        }
     }
 
+    var log: String = "";
     private fun showLogs(text: String) {
+        log += "\n $text"
         val fragment = supportFragmentManager.findFragmentByTag(ReaderFragment.TAG)
         if (fragment != null) {
-            (fragment as ReaderFragment).showLogs(text)
+            (fragment as ReaderFragment).showLogs(log)
         }
     }
 
@@ -91,7 +89,6 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
     private fun cardReading(tag: Tag?) {
 
         tagcomm = IsoDep.get(tag)
-        tagcomm.connect()
         try {
             tagcomm.connect()
         } catch (e: IOException) {
@@ -106,12 +103,13 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
                 readCardMChip()
             else
                 readCardMagStripe()
-            tagcomm.close()
         } catch (e: IOException) {
             Log.e("EMVemulator", "Error tranceive: " + e.message)
             error = "Reading card data ... Error tranceive: " + e.message
             Toast.makeText(applicationContext, error, Toast.LENGTH_SHORT).show()
             return
+        } finally {
+            tagcomm.close()
         }
 
     }
@@ -143,6 +141,12 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
         nfcintent = PendingIntent.getActivity(this, 0, Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0)
         fragmentTransaction(ReaderFragment.newInstance(), ReaderFragment.TAG)
+        createDir()
+    }
+
+    fun createDir() {
+        val emvDir = File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/EMV/")
+        emvDir.mkdirs()
     }
 
     fun appendLog(text: String, filename: String) {
@@ -242,7 +246,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             var response = execute(Commands.SELECT_PPSE)
 
             val select = Commands.SELECT_APPLICATION.apply {
-                Nc = response.toHex().substring(80, 102)
+                Nc = response.toHex().substring(52, 68)
                 SW1WS2 = "00"
             }
             val cardtype: String = getTypeCard(select.split())
@@ -257,8 +261,8 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             var cardnumber: String = "";
             var cardexpiration = ""
             if (cardtype === "MasterCard") {
-                cardnumber = "Card number: " + String(Arrays.copyOfRange(response, 28, 44))
-                cardexpiration = "Card expiration: " + String(Arrays.copyOfRange(response, 50, 52)) + "/" + String(Arrays.copyOfRange(response, 48, 50))
+               // cardnumber = "Card number: " + String(Arrays.copyOfRange(response, 28, 44))
+               // cardexpiration = "Card expiration: " + String(Arrays.copyOfRange(response, 50, 52)) + "/" + String(Arrays.copyOfRange(response, 48, 50))
 
                 for (i in 0..999) {
                     response = execute(Commands.GET_PROCESSING_OPTIONS, false)
@@ -289,11 +293,11 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
     private fun getTypeCard(response: ByteArray): String {
         var cardtype: String = "";
-        if (response.toHex().matches("00 A4 04 00 07 A0 00 00 00 04 10 10 00".toRegex()))
+        if (response.toHex().matches("00A4040007A000000004101000".toRegex()))
             cardtype = "MasterCard"
-        if (response.toHex().matches("00 A4 04 00 07 A0 00 00 00 03 20 10 00".toRegex()))
+        if (response.toHex().matches("00A4040007A000000003201000".toRegex()))
             cardtype = "Visa Electron"
-        if (response.toHex().matches("00 A4 04 00 07 A0 00 00 00 03 10 10 00".toRegex()))
+        if (response.toHex().matches("00A4040007A000000003101000".toRegex()))
             cardtype = "Visa"
         return cardtype
     }
@@ -307,7 +311,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
         val recv = tagcomm.transceive(bytes)
         val received = "Received: " + recv.toHex()
-        Log.i("EMVemulator", received)
+        Log.i("EMVemulator", received.makePair())
         showLogs(received)
         if (log) appendLog((recv.toHex()), filename)
         return recv
@@ -337,4 +341,8 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
         }
         return fragmentTransaction
     }
+}
+
+private fun String.makePair(): String? {
+    return this;
 }
