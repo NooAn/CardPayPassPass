@@ -3,24 +3,25 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    app:layout_constraintTop_toTopOf="parent"
-    app:layout_constraintBottom_toBottomOf="parent"
+    android:layout_height="wrap_content"
     android:background="#fff"
     android:padding="16dp"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
     tools:context=".ReaderFragment">
 
     <TextView
         android:id="@+id/textTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Terminal" />
+        android:text="Terminal"
+        android:textColor="#000" />
 
     <CheckBox
+        android:id="@+id/checkboxChip"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Chip"
-        android:id="@+id/checkboxChip"
         app:layout_constraintHorizontal_bias="0.2"
         app:layout_constraintLeft_toRightOf="@id/textTitle"
         app:layout_constraintRight_toLeftOf="parent" />
@@ -29,7 +30,7 @@
         android:id="@+id/txDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="reading..."
+        android:text="Reading..."
         android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@id/btnRead"
         app:layout_constraintTop_toBottomOf="@id/textTitle"
@@ -40,19 +41,24 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:background="@color/colorbtn"
         android:text="READ"
         app:layout_constraintTop_toBottomOf="@id/txDescription" />
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/btnRead">
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/btnRead">
 
         <TextView
             android:id="@+id/tvLogs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="00 00 00 00" />
+            android:layout_marginBottom="10dp"
+            android:text="..."
+            android:textColor="#000" />
     </ScrollView>
 
 

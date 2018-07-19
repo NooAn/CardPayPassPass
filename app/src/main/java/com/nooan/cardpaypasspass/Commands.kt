@@ -40,6 +40,6 @@ object Commands {
 
     val READ_RECORD_4 = Command(CLA = "00", INS = "B2", P1 = "02", P2 = "24", Lc = "00", Le = "00")
 
-    val COMPUTE_CRYPTOGRAPHIC_CHECKSUM = Command(CLA = "80", INS = "20", P1 = "8E", P2="80",Le = "00")
+    val COMPUTE_CRYPTOGRAPHIC_CHECKSUM = Command(CLA = "80", INS = "2A", P1 = "8E", P2="80",Le = "00")
 
 }

@@ -23,7 +23,6 @@ import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
-import java.util.*
 
 
 interface OnFragmentInteractionListener {
@@ -46,8 +45,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             (supportFragmentManager.findFragmentByTag(ReaderFragment.TAG) as ReaderFragment).startRead()
             nfcAdapter?.enableForegroundDispatch(this, nfcintent, null, nfctechfilter)
         } else {
-            (supportFragmentManager.findFragmentByTag(ReaderFragment.TAG) as ReaderFragment).stopRead()
-            nfcAdapter?.disableReaderMode(this)
+            finishRead()
         }
     }
 
@@ -77,7 +75,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
     var log: String = "";
     private fun showLogs(text: String) {
-        log += "\n $text"
+        log += "\n ${text}"
         val fragment = supportFragmentManager.findFragmentByTag(ReaderFragment.TAG)
         if (fragment != null) {
             (fragment as ReaderFragment).showLogs(log)
@@ -256,19 +254,22 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             response = execute(Commands.READ_RECORD_1.apply {
                 P2 = "0C"
                 Lc = "00"
+                Le = ""
                 Nc = ""
             })
-            var cardnumber: String = "";
-            var cardexpiration = ""
-            if (cardtype === "MasterCard") {
-               // cardnumber = "Card number: " + String(Arrays.copyOfRange(response, 28, 44))
-               // cardexpiration = "Card expiration: " + String(Arrays.copyOfRange(response, 50, 52)) + "/" + String(Arrays.copyOfRange(response, 48, 50))
 
-                for (i in 0..999) {
+            if (cardtype === "MasterCard") {
+
+                cardnumber = "Card number: ${response.getCards()}"
+                cardexpiration = "Card expiration: ${response.getExpired()}"
+
+                showData()
+
+                for (i in 0..3) {
                     response = execute(Commands.GET_PROCESSING_OPTIONS, false)
                     response = execute(Commands.COMPUTE_CRYPTOGRAPHIC_CHECKSUM.apply {
                         Lc = "04"
-                        Nc = "00000${String.format("%03d", i)}00".replace("..(?!$)".toRegex(), "$0 ")
+                        Nc = "00000${String.format("%03d", i)}".replace("..(?!$)".toRegex(), "$0 ")
                     })
 
                     appendLog((response.toHex()), filename)
@@ -276,6 +277,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
                     if (i % 1 == 0) {
                     }
                 }
+                showLogs("<b><b></b></b>")
             }
             if (cardtype === "Visa" || cardtype === "Visa Electron") {
                 cardnumber = "Card number: " + (response.toHex()).substring(12, 36).replace(" ", "")
@@ -283,12 +285,28 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             }
 
             Log.i("EMVemulator", "Done!")
+            finishRead()
 
         } catch (e: IOException) {
             Log.i("EMVemulator", "Error readCard: " + e.message)
             error = "Reading card data ... Error readCard: " + e.message
         }
 
+    }
+
+    private fun finishRead() {
+        (supportFragmentManager.findFragmentByTag(ReaderFragment.TAG) as ReaderFragment).stopRead()
+        nfcAdapter?.disableReaderMode(this)
+    }
+
+    var cardnumber: String = "";
+    var cardexpiration = ""
+
+    private fun showData() {
+        val fragment = supportFragmentManager.findFragmentByTag(ReaderFragment.TAG)
+        if (fragment != null) {
+            (fragment as ReaderFragment).showData(cardnumber, cardexpiration)
+        }
     }
 
     private fun getTypeCard(response: ByteArray): String {
@@ -305,13 +323,13 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
     @Throws(IOException::class)
     protected fun execute(command: Command, log: Boolean = true): ByteArray {
         val bytes = command.split()
-        val sending = "Sent: " + bytes.toHex()
+        val sending = "<h3><font color=#cc0029>Sent:</font></h3> " + bytes.toHex().makePair()
         Log.i("EMVemulator", sending)
         showLogs(sending)
 
         val recv = tagcomm.transceive(bytes)
-        val received = "Received: " + recv.toHex()
-        Log.i("EMVemulator", received.makePair())
+        val received = "<h3><font color=#cc0029>Received:</font></h3> " + recv.toHex().makePair()
+        Log.i("EMVemulator", received)
         showLogs(received)
         if (log) appendLog((recv.toHex()), filename)
         return recv
@@ -343,6 +361,16 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
     }
 }
 
-private fun String.makePair(): String? {
-    return this;
+private fun ByteArray.getCards() = this.toHex().substring(190, 206)
+
+private fun ByteArray.getExpired() = this.toHex().substring(209, 213)
+
+fun String.makePair(): String? {
+    var stringBuilder = StringBuilder()
+    for (i in 1..this.length - 1 step 2) {
+        stringBuilder.append(this.get(i - 1)).append(this.get(i)).append(" ")
+
+    }
+    return stringBuilder.toString()
 }
+
