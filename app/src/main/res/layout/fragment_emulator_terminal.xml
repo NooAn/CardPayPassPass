@@ -4,6 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintBottom_toBottomOf="parent"
     android:background="#fff"
     android:padding="16dp"
     tools:context=".ReaderFragment">
@@ -24,7 +26,7 @@
         app:layout_constraintRight_toLeftOf="parent" />
 
     <TextView
-        android:id="@+id/txReading"
+        android:id="@+id/txDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="reading..."
@@ -39,7 +41,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="READ"
-        app:layout_constraintTop_toBottomOf="@id/txReading" />
+        app:layout_constraintTop_toBottomOf="@id/txDescription" />
 
     <ScrollView
         android:layout_width="match_parent"

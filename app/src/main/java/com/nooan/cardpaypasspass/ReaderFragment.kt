@@ -2,7 +2,6 @@ package com.nooan.cardpaypasspass
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.net.Uri
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -45,7 +44,7 @@ class ReaderFragment : Fragment() {
     private fun initView() {
         statusRead = false
         btnRead.setOnClickListener {
-            txReading.visibility = View.VISIBLE
+            txDescription.visibility = View.VISIBLE
             listener?.onClickReadCard(statusRead)
             statusRead = !statusRead
         }
