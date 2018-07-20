@@ -27,9 +27,11 @@ import java.io.IOException
 
 interface OnFragmentInteractionListener {
     fun onClickReadCard(statusRead: Boolean)
+    fun writteTextInFile(filename: File, text: String)
 }
 
 class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
+
     private var nfcAdapter: NfcAdapter? = null                                                  /*!< represents the local NFC adapter */
     private var tag: Tag? = null                                                                 /*!< represents an NFC tag that has been discovered */
     private lateinit var tagcomm: IsoDep                                                         /*!< provides access to ISO-DEP (ISO 14443-4) properties and I/O operations on a Tag */
@@ -56,21 +58,6 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             Log.i("EMVemulator", "Tag detected")
             cardReading(tag)
         }
-    }
-
-    private fun test() {
-//        runBlocking {
-//            async {
-//                val deferred = (1..100).map { n ->
-//                    delay(100)
-//                    launch(UI) {
-//                        text += "\n $n"
-//                        Log.e("LOG", "s: $n")
-//                        showLogs(text)
-//                    }
-//                }
-//            }.await()
-//        }
     }
 
     var log: String = "";
@@ -149,16 +136,20 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
     fun appendLog(text: String, filename: String) {
         val logFile = File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/EMV/", filename)
-        if (!logFile.exists()) {
+        writteTextInFile(logFile, text)
+    }
+
+    override fun writteTextInFile(filename: File, text: String) {
+        if (!filename.exists()) {
             try {
-                logFile.createNewFile()
+                filename.createNewFile()
             } catch (e: IOException) {
                 e.printStackTrace()
             }
         }
         try {
             //BufferedWriter for performance, true to set append to file flag
-            val buf = BufferedWriter(FileWriter(logFile, true))
+            val buf = BufferedWriter(FileWriter(filename, true))
             buf.append(text)
             buf.newLine()
             buf.close()

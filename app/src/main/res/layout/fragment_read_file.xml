@@ -1,16 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#fff"
-
+    android:padding="16dp"
     tools:context=".ReadFileFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="reading" />
 
-</FrameLayout>
+    <EditText
+        android:id="@+id/etNameOfFile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="File name"
+        android:textSize="12sp"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnSelectFile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:background="@color/colorbtn"
+        android:text="Select file"
+        app:layout_constraintRight_toLeftOf="@id/btnSaveFile"
+        app:layout_constraintTop_toBottomOf="@id/etCommandLine" />
+
+    <EditText
+        android:id="@+id/etCommandLine"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="start"
+        android:hint="# this is comment of command line \n# Please, select file or type your command:"
+        android:inputType="textMultiLine"
+        android:lines="10"
+        android:textAlignment="textStart"
+        app:layout_constraintBottom_toBottomOf="@id/btnSaveFile"
+        app:layout_constraintTop_toBottomOf="@+id/etNameOfFile" />
+
+    <Button
+        android:id="@+id/btnSaveFile"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_margin="8dp"
+        android:background="@color/colorbtn"
+        android:text="Save"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etCommandLine" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
