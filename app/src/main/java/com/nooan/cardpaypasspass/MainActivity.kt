@@ -28,9 +28,12 @@ import java.io.IOException
 interface OnFragmentInteractionListener {
     fun onClickReadCard(statusRead: Boolean)
     fun writteTextInFile(filename: File, text: String)
+    fun setNewCommands(commands: List<Command>)
 }
 
 class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
+    override fun setNewCommands(commands: List<Command>) {
+    }
 
     private var nfcAdapter: NfcAdapter? = null                                                  /*!< represents the local NFC adapter */
     private var tag: Tag? = null                                                                 /*!< represents an NFC tag that has been discovered */

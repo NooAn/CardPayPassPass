@@ -17,6 +17,7 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
 import java.io.InputStreamReader
+import android.provider.OpenableColumns
 
 
 private const val ARG_PARAM1 = "param1"
@@ -54,6 +55,14 @@ class ReadFileFragment : Fragment() {
             val filename = if (etNameOfFile.text.isBlank()) "MyCommands.txt" else etNameOfFile.text.toString()
             listener?.writteTextInFile(File(Environment.getExternalStorageDirectory().absolutePath + "/EMV/", filename), etCommandLine.text.toString())
         }
+        btnSend.setOnClickListener {
+            listener?.setNewCommands(getCommands(etCommandLine.text.toString()))
+        }
+    }
+
+    private fun getCommands(text: String): List<Command> {
+        val listLine = text.split("\n")
+        return arrayListOf()
     }
 
     override fun onAttach(context: Context) {
@@ -70,19 +79,10 @@ class ReadFileFragment : Fragment() {
         listener = null
     }
 
-
     fun performFileSearch() {
-
-        // ACTION_OPEN_DOCUMENT is the intent to choose a file via the system's file
-        // browser.
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-
-        // Filter to only show results that can be "opened", such as a
-        // file (as opposed to a list of contacts or timezones)
         intent.addCategory(Intent.CATEGORY_OPENABLE)
-
         intent.type = "*/*"
-
         startActivityForResult(intent, READ_REQUEST_CODE)
     }
 
@@ -94,29 +94,41 @@ class ReadFileFragment : Fragment() {
         return inputAsString.toString()
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int,
-                                  resultData: Intent?) {
-
-        // The ACTION_OPEN_DOCUMENT intent was sent with the request code
-        // READ_REQUEST_CODE. If the request code seen here doesn't match, it's the
-        // response to some other intent, and the code below shouldn't run at all.
+    override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
 
         if (requestCode == READ_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            // The document selected by the user won't be returned in the intent.
-            // Instead, a URI to that document will be contained in the return intent
-            // provided to this method as a parameter.
-            // Pull that URI using resultData.getData().
             var uri: Uri? = null
             if (resultData != null) {
                 uri = resultData.data
                 Log.i(TAG, "Uri: " + uri!!.toString())
-                //showImage(uri)
                 val commandsText = readTextFromUri(uri)
                 etCommandLine.text.clear()
                 etCommandLine.setText(commandsText)
-                etNameOfFile.setText(uri.lastPathSegment)
+                etNameOfFile.setText(getFileName(uri))
             }
         }
+    }
+
+    fun getFileName(uri: Uri): String {
+        var result: String? = null
+        if (uri.scheme == "content") {
+            val cursor = activity?.contentResolver?.query(uri, null, null, null, null)
+            try {
+                if (cursor != null && cursor!!.moveToFirst()) {
+                    result = cursor!!.getString(cursor!!.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+                }
+            } finally {
+                cursor!!.close()
+            }
+        }
+        if (result == null) {
+            result = uri.path
+            val cut = result!!.lastIndexOf('/')
+            if (cut != -1) {
+                result = result.substring(cut + 1)
+            }
+        }
+        return result
     }
 
     companion object {

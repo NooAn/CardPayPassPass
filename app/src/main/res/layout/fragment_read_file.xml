@@ -24,6 +24,7 @@
         android:layout_margin="8dp"
         android:background="@color/colorbtn"
         android:text="Select file"
+        android:textSize="12sp"
         app:layout_constraintRight_toLeftOf="@id/btnSaveFile"
         app:layout_constraintTop_toBottomOf="@id/etCommandLine" />
 
@@ -46,7 +47,20 @@
         android:layout_margin="8dp"
         android:background="@color/colorbtn"
         android:text="Save"
+        android:textSize="12sp"
         app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/etCommandLine" />
+
+    <Button
+        android:id="@+id/btnSend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:background="@color/colorbtn"
+        android:text="Send to read"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toStartOf="@+id/btnSelectFile"
+        app:layout_constraintRight_toRightOf="@id/btnSelectFile"
         app:layout_constraintTop_toBottomOf="@id/etCommandLine" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
