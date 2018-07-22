@@ -21,8 +21,22 @@ data class Command(
         var SW1WS2: String = "" // 9000 (success or specific status bytes
 ) {
     fun split(): ByteArray {
-        return (CLA.plus(INS).plus(P1).plus(P2).plus(Lc).plus(Nc).plus(Le).plus(Nr).plus(SW1WS2)).hexToByteArray()
+        return getHexString().hexToByteArray()
     }
+
+    fun getHexString() = (CLA.plus(INS).plus(P1).plus(P2).plus(Lc).plus(Nc).plus(Le).plus(Nr).plus(SW1WS2))
+}
+
+object Value {
+    val TAG = "Host Card Emulator"
+    val STATUS_SUCCESS = "9000"
+    val STATUS_FAILED = "6F00"
+    val CLA_NOT_SUPPORTED = "6E00"
+    val INS_NOT_SUPPORTED = "6D00"
+    val AID = "A0000002471001"
+    val SELECT_INS = "A4"
+    val DEFAULT_CLA = "00"
+    val MIN_APDU_LENGTH = 12
 }
 
 object Commands {
@@ -40,6 +54,5 @@ object Commands {
 
     val READ_RECORD_4 = Command(CLA = "00", INS = "B2", P1 = "02", P2 = "24", Lc = "00", Le = "00")
 
-    val COMPUTE_CRYPTOGRAPHIC_CHECKSUM = Command(CLA = "80", INS = "2A", P1 = "8E", P2="80",Le = "00")
-
+    val COMPUTE_CRYPTOGRAPHIC_CHECKSUM = Command(CLA = "80", INS = "2A", P1 = "8E", P2 = "80", Le = "00")
 }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:apduServiceBanner="@drawable/ic_dashboard_black_24dp"
+    android:description="@string/app_name"
+    android:requireDeviceUnlock="false">
+
+    <aid-group android:category="payment">
+        <aid-filter android:name="325041592E5359532E4444463031" />
+        <aid-filter android:name="A0000000031010" />
+    </aid-group>
+
+</host-apdu-service>

@@ -1,48 +1,60 @@
 package com.nooan.cardpaypasspass
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
 import android.util.Log
+import java.io.File
+
 
 class NfcService : HostApduService() {
-    companion object {
-        val TAG = "Host Card Emulator"
-        val STATUS_SUCCESS = "9000"
-        val STATUS_FAILED = "6F00"
-        val CLA_NOT_SUPPORTED = "6E00"
-        val INS_NOT_SUPPORTED = "6D00"
-        val AID = "A0000002471001"
-        val SELECT_INS = "A4"
-        val DEFAULT_CLA = "00"
-        val MIN_APDU_LENGTH = 12
-    }
 
     override fun onDeactivated(reason: Int) {
         Log.e("LOG onDEACTIVATED", reason.toString());
     }
 
-    override fun processCommandApdu(apdu: ByteArray?, bundle: Bundle?): ByteArray {
-        Log.i(TAG, "Received APDU: $apdu - String Representation: ${if (apdu != null) String(apdu) else "null"}")
-        return byteArrayOf();
+    fun getData(context: Context?): List<Command> {
+        var list: List<Command> = arrayListOf()
+        if (filePath.isNotBlank()) {
+            Log.e("", "")
+            list = getCommands(Uri.fromFile(File(filePath)).readTextFromUri(context), this::showError)
+        }
+        return list
     }
 
+    private fun showError(text: String, line: String) {
+        Log.e("LOG", "OnError in line: $line")
+    }
+
+    override fun processCommandApdu(apdu: ByteArray?, bundle: Bundle?): ByteArray {
+        Log.i("LOG", "Received APDU: $apdu - String Representation: ${if (apdu != null) String(apdu) else "null"}")
+        var index = 0
+        val commands = getData(applicationContext)
+        commands.forEachIndexed { i, command ->
+            if (apdu?.toHex() == command.getHexString()) {
+                index = i + 1
+                Log.e("LOG", "Found bytes: ${apdu.toHex()}")
+                return@forEachIndexed
+            }
+        }
+        return commands[index].split()
+    }
+
+    private lateinit var filePath: String
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Check if intent has extras
+        if (intent?.getExtras() != null) {
+            // Get message
+            filePath = intent.getExtras().getString("path")
+        }
+        return START_NOT_STICKY
+    }
 }
 
 private val HEX_CHARS = "0123456789ABCDEF"
-
-fun String.hexToByteArray2(): ByteArray {
-
-    val result = ByteArray(this.length / 2)
-
-    for (i in 0 until this.length step 2) {
-        val firstIndex = HEX_CHARS.indexOf(this[i]);
-        val secondIndex = HEX_CHARS.indexOf(this[i + 1]);
-
-        val octet = firstIndex.shl(4).or(secondIndex)
-        result.set(i.shr(1), octet.toByte())
-    }
-    return result
-}
 
 fun String.hexToByteArray(): ByteArray {
 
@@ -59,7 +71,8 @@ fun String.hexToByteArray(): ByteArray {
     return result
 }
 
-private val HEX_CHARS_ARRAY = "0123456789ABCDEF".toCharArray()
+val HEX_CHARS_ARRAY = "0123456789ABCDEF".toCharArray()
+
 fun ByteArray.toHex(): String {
     val result = StringBuffer()
 

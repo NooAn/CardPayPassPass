@@ -47,7 +47,6 @@ class ReaderFragment : Fragment() {
         btnRead.setOnClickListener {
             txDescription.visibility = View.VISIBLE
             listener?.onClickReadCard(statusRead)
-            statusRead = !statusRead
         }
         checkboxChip.setOnClickListener {
             (activity as MainActivity).mChip = checkboxChip.isChecked
@@ -70,11 +69,15 @@ class ReaderFragment : Fragment() {
 
     @SuppressLint("SetTextI18n")
     fun startRead() {
-        btnRead.text = "STOP READ"
+        if (btnRead != null) {
+            statusRead = !statusRead
+            btnRead.text = "STOP READ"
+        }
     }
 
     @SuppressLint("SetTextI18n")
     fun stopRead() {
+        statusRead = !statusRead
         btnRead.text = "READ"
     }
 

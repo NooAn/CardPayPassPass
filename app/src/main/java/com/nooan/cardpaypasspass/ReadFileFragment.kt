@@ -1,23 +1,25 @@
 package com.nooan.cardpaypasspass
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
-import androidx.fragment.app.Fragment
+import android.os.Environment
+import android.provider.OpenableColumns
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import kotlinx.android.synthetic.main.fragment_emulator_terminal.*
+import android.widget.Toast
+import androidx.fragment.app.Fragment
 import kotlinx.android.synthetic.main.fragment_read_file.*
-import android.content.Intent
-import android.app.Activity
-import android.os.Environment
-import android.util.Log
-import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
-import java.io.InputStreamReader
-import android.provider.OpenableColumns
 
 
 private const val ARG_PARAM1 = "param1"
@@ -38,8 +40,8 @@ class ReadFileFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
-        val view = inflater.inflate(R.layout.fragment_read_file, container, false)
-        return view
+        return inflater.inflate(R.layout.fragment_read_file, container, false)
+
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -53,16 +55,23 @@ class ReadFileFragment : Fragment() {
         }
         btnSaveFile.setOnClickListener {
             val filename = if (etNameOfFile.text.isBlank()) "MyCommands.txt" else etNameOfFile.text.toString()
-            listener?.writteTextInFile(File(Environment.getExternalStorageDirectory().absolutePath + "/EMV/", filename), etCommandLine.text.toString())
+            listener?.writteTextInFile(File(Environment.getExternalStorageDirectory().absolutePath + "/EMV/", filename), etCommandLine.text.toString(), false)
+            Toast.makeText(activity, "Saved", Toast.LENGTH_SHORT).show()
         }
         btnSend.setOnClickListener {
-            listener?.setNewCommands(getCommands(etCommandLine.text.toString()))
+            val commands = getCommands(etCommandLine.text.toString(), this::detailText)
+            if (commands.isNotEmpty()) {
+                listener?.openReaderFragment()
+                listener?.setNewCommands(commands = commands)
+            }
         }
     }
 
-    private fun getCommands(text: String): List<Command> {
-        val listLine = text.split("\n")
-        return arrayListOf()
+
+    private fun detailText(text: String, it: String) {
+        val wordtoSpan = SpannableString(text)
+        wordtoSpan.setSpan(ForegroundColorSpan(Color.YELLOW), text.indexOf(it), text.indexOf(it) + it.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+        etCommandLine.setText(wordtoSpan)
     }
 
     override fun onAttach(context: Context) {
@@ -86,25 +95,18 @@ class ReadFileFragment : Fragment() {
         startActivityForResult(intent, READ_REQUEST_CODE)
     }
 
-    @Throws(IOException::class)
-    private fun readTextFromUri(uri: Uri): String {
-        val inputStream = activity?.getContentResolver()?.openInputStream(uri)
-        val inputAsString = inputStream?.bufferedReader().use { it?.readText() }
-        inputStream?.close()
-        return inputAsString.toString()
-    }
+    var uri: Uri? = null
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
 
         if (requestCode == READ_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            var uri: Uri? = null
             if (resultData != null) {
                 uri = resultData.data
                 Log.i(TAG, "Uri: " + uri!!.toString())
-                val commandsText = readTextFromUri(uri)
+                val commandsText = uri!!.readTextFromUri(activity)
                 etCommandLine.text.clear()
                 etCommandLine.setText(commandsText)
-                etNameOfFile.setText(getFileName(uri))
+                etNameOfFile.setText(getFileName(uri!!))
             }
         }
     }
@@ -114,8 +116,8 @@ class ReadFileFragment : Fragment() {
         if (uri.scheme == "content") {
             val cursor = activity?.contentResolver?.query(uri, null, null, null, null)
             try {
-                if (cursor != null && cursor!!.moveToFirst()) {
-                    result = cursor!!.getString(cursor!!.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
                 }
             } finally {
                 cursor!!.close()
@@ -134,9 +136,6 @@ class ReadFileFragment : Fragment() {
     companion object {
         val TAG: String = "ReadFile"
         val READ_REQUEST_CODE = 42
-        val WRITE_REQUEST_CODE = 43
-        val EDIT_REQUEST_CODE = 44
-
 
         @JvmStatic
         fun newInstance(param1: String = "", param2: String = "") =
@@ -148,3 +147,46 @@ class ReadFileFragment : Fragment() {
                 }
     }
 }
+
+private fun String.commandTransform(): Command {
+    val command = Command()
+    command.CLA = "${this[0]}${this[1]}"
+    command.INS = "${this[2]}${this[3]}"
+    command.P1 = "${this[4]}${this[5]}"
+    command.P2 = "${this[6]}${this[7]}"
+    command.Lc = "${this[8]}${this[9]}"
+    command.Nc = this.substring(10, length)
+    return command
+}
+
+@Throws(IOException::class)
+fun Uri.readTextFromUri(context: Context?): String {
+    val inputStream = context?.contentResolver?.openInputStream(this)
+    val inputAsString = inputStream?.bufferedReader().use { it?.readText() }
+    inputStream?.close()
+    return inputAsString.toString()
+}
+
+fun getCommands(text: String, func: (t: String, s: String) -> Unit): List<Command> {
+    val listLine = text.split("\n")
+    val listCommand: ArrayList<Command> = arrayListOf()
+    listLine.forEach {
+        if (!it.startsWith("#")) {
+            var line = it.replace("\\s".toRegex(), "").toUpperCase()
+            line.map { char ->
+                if (char !in HEX_CHARS_ARRAY) {
+                    func(text, it)
+                    return arrayListOf()
+                }
+            }
+            if (line.length < 9 && line != "") {
+                func(text, it)
+                return arrayListOf()
+            }
+            if (line != "")
+                listCommand.add(line.commandTransform())
+        }
+    }
+    return listCommand
+}
+
