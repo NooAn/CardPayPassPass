@@ -3,6 +3,7 @@ package com.nooan.cardpaypasspass
 import android.Manifest
 import android.app.PendingIntent
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.nfc.NfcAdapter
@@ -32,9 +33,15 @@ interface OnFragmentInteractionListener {
     fun writteTextInFile(filename: File, text: String, append: Boolean)
     fun setNewCommands(commands: List<Command>)
     fun openReaderFragment()
+    fun parseLogs()
 }
 
 class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
+
+    override fun parseLogs() {
+        sendLogsToParseLog("Hello")
+    }
+
     override fun openReaderFragment() {
         fragmentTransaction(ReaderFragment.newInstance(), ReaderFragment.TAG)
     }
@@ -75,10 +82,17 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
     var log: String = "";
     private fun showLogs(text: String) {
-        log += "\n ${text}"
+        log += "\n $text"
         val fragment = supportFragmentManager.findFragmentByTag(ReaderFragment.TAG)
         if (fragment != null) {
             (fragment as ReaderFragment).showLogs(log)
+        }
+    }
+
+    private fun sendLogsToParseLog(text: String) {
+        val fragment = supportFragmentManager.findFragmentByTag(LogsFragment.TAG)
+        if (fragment != null) {
+            (fragment as LogsFragment).setTextLog(text)
         }
     }
 
@@ -151,6 +165,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             }
             R.id.navigation_logs -> {
                 fragmentTransaction(LogsFragment.newInstance(), LogsFragment.TAG)
+                sendLogsToParseLog("6F338407A0000000041010A628500A4D6173746572436172645F2D047275656E870101BF0C0F9F4D020B0A9F6E07064300003030009000")
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_reads -> {
@@ -168,10 +183,9 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
         nfcintent = PendingIntent.getActivity(this, 0, Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0)
-        cardEmulation = CardEmulation.getInstance(nfcAdapter)
+        //cardEmulation = CardEmulation.getInstance(nfcAdapter)
         fragmentTransaction(ReaderFragment.newInstance(), ReaderFragment.TAG)
         createDir()
-
     }
 
     fun createDir() {
@@ -192,12 +206,12 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
                 e.printStackTrace()
             }
         }
-        try {
+        try { //check it fixme
             //BufferedWriter for performance, true to set append to file flag
-            val buf = BufferedWriter(FileWriter(filename, append))
-            buf.append(text)
-            buf.newLine()
-            buf.close()
+            BufferedWriter(FileWriter(filename, append)).apply {
+                append(text)
+                newLine()
+            }.close()
         } catch (e: IOException) {
             e.printStackTrace()
         }

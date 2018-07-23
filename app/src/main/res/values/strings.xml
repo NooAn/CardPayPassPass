@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">CardPayPassPass</string>
+    <string name="app_name">CardPass</string>
     <string name="title_home">Read Cards</string>
     <string name="title_dashboard">Logger</string>
     <string name="title_notifications">Reading File</string>

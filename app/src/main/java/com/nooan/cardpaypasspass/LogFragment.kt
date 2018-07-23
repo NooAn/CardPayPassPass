@@ -1,13 +1,18 @@
 package com.nooan.cardpaypasspass
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.WebResourceRequest
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import kotlinx.android.synthetic.main.fragment_logs.*
+
 
 
 private const val ARG_PARAM1 = "param1"
@@ -29,6 +34,25 @@ class LogsFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_logs, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+    }
+
+    fun setTextLog(text: String) {
+//        val decoded = RootDecoder().decode(text, "EMV", "constructed")
+//        DecodedWriter(System.out).write(decoded, "")
     }
 
 

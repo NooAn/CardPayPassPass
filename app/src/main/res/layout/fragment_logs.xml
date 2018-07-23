@@ -14,8 +14,8 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:text="Logs:"
-        android:textColor="@color/colorAccent"
         android:textAlignment="center"
+        android:textColor="@color/colorAccent"
         android:textSize="16sp" />
 
     <androidx.core.widget.NestedScrollView
@@ -24,9 +24,10 @@
         app:layout_constraintTop_toBottomOf="@+id/tvTitle">
 
         <TextView
+            android:id="@+id/tvLog"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="00 000 00 00 00 "
+            android:hint="To start with, you should read some cards"
             android:textColor="#222" />
     </androidx.core.widget.NestedScrollView>
 
