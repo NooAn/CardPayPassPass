@@ -31,8 +31,6 @@ class LogsFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_logs, container, false)
     }
 
-    fun onButtonPressed(uri: Uri) {
-    }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
