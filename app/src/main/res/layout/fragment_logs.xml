@@ -28,7 +28,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="To start with, you should read some cards"
-            android:textColor="#222" />
+            android:textColor="#999" />
     </androidx.core.widget.NestedScrollView>
 
 

@@ -3,7 +3,6 @@ package com.nooan.cardpaypasspass
 import android.Manifest
 import android.app.PendingIntent
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.nfc.NfcAdapter
@@ -39,7 +38,6 @@ interface OnFragmentInteractionListener {
 class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
     override fun parseLogs() {
-        sendLogsToParseLog("Hello")
     }
 
     override fun openReaderFragment() {
@@ -64,7 +62,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
     fun changeState(statusRead: Boolean) {
         if (!statusRead) {
-            (supportFragmentManager.findFragmentByTag(ReaderFragment.TAG) as ReaderFragment).startRead()
+            (supportFragmentManager.findFragmentByTag(ReaderFragment.TAG) as ReaderFragment).showStartRead()
             nfcAdapter?.enableForegroundDispatch(this, nfcintent, null, nfctechfilter)
         } else {
             finishRead()
@@ -81,15 +79,16 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
     }
 
     var log: String = "";
+    var listLogs = arrayListOf<String>()
     private fun showLogs(text: String) {
-        log += "\n $text"
+        log += "\n$text"
         val fragment = supportFragmentManager.findFragmentByTag(ReaderFragment.TAG)
         if (fragment != null) {
             (fragment as ReaderFragment).showLogs(log)
         }
     }
 
-    private fun sendLogsToParseLog(text: String) {
+    private fun sendLogsToParseLog(text: ArrayList<String>) {
         val fragment = supportFragmentManager.findFragmentByTag(LogsFragment.TAG)
         if (fragment != null) {
             (fragment as LogsFragment).setTextLog(text)
@@ -165,7 +164,8 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             }
             R.id.navigation_logs -> {
                 fragmentTransaction(LogsFragment.newInstance(), LogsFragment.TAG)
-                sendLogsToParseLog("6F338407A0000000041010A628500A4D6173746572436172645F2D047275656E870101BF0C0F9F4D020B0A9F6E07064300003030009000")
+                sendLogsToParseLog(listLogs)
+
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_reads -> {
@@ -344,7 +344,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
     }
 
     private fun finishRead() {
-        (supportFragmentManager.findFragmentByTag(ReaderFragment.TAG) as ReaderFragment).stopRead()
+        (supportFragmentManager.findFragmentByTag(ReaderFragment.TAG) as ReaderFragment).showStopRead()
         nfcAdapter?.disableReaderMode(this)
     }
 
@@ -372,14 +372,16 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
     @Throws(IOException::class)
     protected fun execute(command: Command, log: Boolean = true): ByteArray {
         val bytes = command.split()
-        val sending = "<h3><font color=#cc0029>Sent:</font></h3> " + bytes.toHex().makePair()
-        Log.i("EMVemulator", sending)
-        showLogs(sending)
+        val htmlSending = "<h3><font color=#cc0029>Sent:</font></h3> " + bytes.toHex().makePair()
+        Log.i("EMVemulator", htmlSending)
+        showLogs(htmlSending)
+        listLogs.add(bytes.toHex())
 
         val recv = tagcomm.transceive(bytes)
-        val received = "<h3><font color=#cc0029>Received:</font></h3> " + recv.toHex().makePair()
-        Log.i("EMVemulator", received)
-        showLogs(received)
+        val htmlReceived = "<h3><font color=#cc0029>Received:</font></h3> " + recv.toHex().makePair()
+        listLogs.add(recv.toHex())
+        Log.i("EMVemulator", htmlReceived)
+        showLogs(htmlReceived)
         if (log) appendLog((recv.toHex()), filename)
         return recv
     }

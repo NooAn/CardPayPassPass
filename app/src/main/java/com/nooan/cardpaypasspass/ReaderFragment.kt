@@ -41,9 +41,14 @@ class ReaderFragment : Fragment() {
     }
 
     private var statusRead: Boolean = false
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString("text", tvLogs.text.toString())
+    }
 
     private fun initView() {
-        statusRead = false
+        if (statusRead) showStopRead()
+        tvLogs.text = Html.fromHtml("<p> ${(activity as MainActivity).log} <p> ")
         btnRead.setOnClickListener {
             txDescription.visibility = View.VISIBLE
             listener?.onClickReadCard(statusRead)
@@ -68,7 +73,7 @@ class ReaderFragment : Fragment() {
     }
 
     @SuppressLint("SetTextI18n")
-    fun startRead() {
+    fun showStartRead() {
         if (btnRead != null) {
             statusRead = !statusRead
             btnRead.text = "STOP READ"
@@ -76,7 +81,7 @@ class ReaderFragment : Fragment() {
     }
 
     @SuppressLint("SetTextI18n")
-    fun stopRead() {
+    fun showStopRead() {
         statusRead = !statusRead
         btnRead.text = "READ"
     }

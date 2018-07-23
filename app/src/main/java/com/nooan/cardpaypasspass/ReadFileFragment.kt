@@ -67,7 +67,6 @@ class ReadFileFragment : Fragment() {
         }
     }
 
-
     private fun detailText(text: String, it: String) {
         val wordtoSpan = SpannableString(text)
         wordtoSpan.setSpan(ForegroundColorSpan(Color.YELLOW), text.indexOf(it), text.indexOf(it) + it.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
