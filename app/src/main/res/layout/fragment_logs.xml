@@ -8,14 +8,20 @@
     android:padding="16dp"
     tools:context=".LogsFragment">
 
+    <FrameLayout
+        android:id="@+id/fragment_container_box"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:descendantFocusability="blocksDescendants" />
+
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:text="Logs:"
+        android:text="Parsing:"
         android:textAlignment="center"
-        android:textColor="@color/colorAccent"
+        android:textColor="@color/text"
         android:textSize="16sp" />
 
     <androidx.core.widget.NestedScrollView

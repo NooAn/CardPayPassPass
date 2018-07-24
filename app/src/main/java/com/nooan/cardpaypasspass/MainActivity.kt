@@ -163,7 +163,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_logs -> {
-                fragmentTransaction(LogsFragment.newInstance(), LogsFragment.TAG)
+                fragmentTransaction(LogsFragment.newInstance(listLogs), LogsFragment.TAG)
                 sendLogsToParseLog(listLogs)
 
                 return@OnNavigationItemSelectedListener true
