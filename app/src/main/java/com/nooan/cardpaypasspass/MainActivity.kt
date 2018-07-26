@@ -37,8 +37,7 @@ interface OnFragmentInteractionListener {
 
 class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
-    override fun parseLogs() {
-    }
+    override fun parseLogs() {}
 
     override fun openReaderFragment() {
         fragmentTransaction(ReaderFragment.newInstance(), ReaderFragment.TAG)
@@ -247,7 +246,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
     private fun readCardMChip() {
         try {
-
+            Log.e("LOG", "MChip")
             appendLog("MChip", filename)
 
             var response = execute(Commands.SELECT_PPSE) //Get PPSE
@@ -376,6 +375,8 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
         Log.i("EMVemulator", htmlSending)
         showLogs(htmlSending)
         listLogs.add(bytes.toHex())
+        if (log) appendLog((bytes.toHex()), filename)
+
 
         val recv = tagcomm.transceive(bytes)
         val htmlReceived = "<h3><font color=#cc0029>Received:</font></h3> " + recv.toHex().makePair()

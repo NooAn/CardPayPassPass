@@ -8,7 +8,6 @@
     android:padding="16dp"
     tools:context=".ReadFileFragment">
 
-
     <EditText
         android:id="@+id/etNameOfFile"
         android:layout_width="match_parent"
@@ -21,12 +20,16 @@
         android:id="@+id/btnSelectFile"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
+        android:layout_margin="4dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="8dp"
         android:background="@color/colorbtn"
         android:text="Select file"
         android:textSize="12sp"
-        app:layout_constraintRight_toLeftOf="@id/btnSaveFile"
-        app:layout_constraintTop_toBottomOf="@id/etCommandLine" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/btnSend"
+        app:layout_constraintTop_toBottomOf="@+id/btnSaveFile" />
 
     <EditText
         android:id="@+id/etCommandLine"
@@ -38,29 +41,54 @@
         android:lines="10"
         android:textAlignment="textStart"
         app:layout_constraintBottom_toBottomOf="@id/btnSaveFile"
-        app:layout_constraintTop_toBottomOf="@+id/etNameOfFile" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/btnSaveFile"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
-        android:layout_margin="8dp"
+        android:layout_margin="4dp"
+        android:layout_marginStart="4dp"
         android:background="@color/colorbtn"
         android:text="Save"
         android:textSize="12sp"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.493"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/etCommandLine" />
 
     <Button
         android:id="@+id/btnSend"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
         android:background="@color/colorbtn"
         android:text="Send to read"
         android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/btnSelectFile"
         app:layout_constraintEnd_toStartOf="@+id/btnSelectFile"
-        app:layout_constraintRight_toRightOf="@id/btnSelectFile"
-        app:layout_constraintTop_toBottomOf="@id/etCommandLine" />
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/btnSendToService"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/btnSelectFile"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <Button
+        android:id="@+id/btnSendToService"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="4dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@color/colorbtn"
+        android:text="Send this file on Service"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnSelectFile"
+        app:layout_constraintVertical_bias="0.777" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

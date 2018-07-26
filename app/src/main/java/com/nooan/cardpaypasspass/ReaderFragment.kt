@@ -41,10 +41,6 @@ class ReaderFragment : Fragment() {
     }
 
     private var statusRead: Boolean = false
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putString("text", tvLogs.text.toString())
-    }
 
     private fun initView() {
         if (statusRead) showStopRead()
@@ -91,7 +87,7 @@ class ReaderFragment : Fragment() {
     }
 
     fun showData(cardnumber: String, cardexpiration: String) {
-        txDescription.text = "$cardnumber /\n$cardexpiration"
+        txDescription.text = "$cardnumber \n$cardexpiration"
     }
 
     companion object {

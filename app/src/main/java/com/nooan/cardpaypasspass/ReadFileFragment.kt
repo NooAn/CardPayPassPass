@@ -1,12 +1,17 @@
 package com.nooan.cardpaypasspass
 
 import android.app.Activity
+import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
+import android.database.Cursor
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.DocumentsContract
+import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.text.Spannable
 import android.text.SpannableString
@@ -20,6 +25,7 @@ import androidx.fragment.app.Fragment
 import kotlinx.android.synthetic.main.fragment_read_file.*
 import java.io.File
 import java.io.IOException
+import java.net.URISyntaxException
 
 
 private const val ARG_PARAM1 = "param1"
@@ -41,7 +47,6 @@ class ReadFileFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_read_file, container, false)
-
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -53,17 +58,27 @@ class ReadFileFragment : Fragment() {
         btnSelectFile.setOnClickListener {
             performFileSearch()
         }
+
         btnSaveFile.setOnClickListener {
             val filename = if (etNameOfFile.text.isBlank()) "MyCommands.txt" else etNameOfFile.text.toString()
             listener?.writteTextInFile(File(Environment.getExternalStorageDirectory().absolutePath + "/EMV/", filename), etCommandLine.text.toString(), false)
             Toast.makeText(activity, "Saved", Toast.LENGTH_SHORT).show()
         }
+
         btnSend.setOnClickListener {
             val commands = getCommands(etCommandLine.text.toString(), this::detailText)
             if (commands.isNotEmpty()) {
                 listener?.openReaderFragment()
                 listener?.setNewCommands(commands = commands)
             }
+        }
+
+        btnSendToService.setOnClickListener {
+            val path = getFilePath(activity?.baseContext!!, uri ?: return@setOnClickListener)
+            val pref = activity!!.getSharedPreferences("EMV", Context.MODE_PRIVATE)
+            val editor = pref.edit()
+            editor.putString("path", path)
+            editor.apply()
         }
     }
 
@@ -164,6 +179,67 @@ fun Uri.readTextFromUri(context: Context?): String {
     val inputAsString = inputStream?.bufferedReader().use { it?.readText() }
     inputStream?.close()
     return inputAsString.toString()
+}
+
+@Throws(URISyntaxException::class)
+fun getFilePath(context: Context, uri: Uri): String? {
+    var uri = uri
+    var selection: String? = null
+    var selectionArgs: Array<String>? = null
+    // Uri is different in versions after KITKAT (Android 4.4), we need to
+    if (Build.VERSION.SDK_INT >= 19 && DocumentsContract.isDocumentUri(context.applicationContext, uri)) {
+        if (isExternalStorageDocument(uri)) {
+            val docId = DocumentsContract.getDocumentId(uri)
+            val split = docId.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            return Environment.getExternalStorageDirectory().toString() + "/" + split[1]
+        } else if (isDownloadsDocument(uri)) {
+            val id = DocumentsContract.getDocumentId(uri)
+            uri = ContentUris.withAppendedId(
+                    Uri.parse("content://downloads/public_downloads"), java.lang.Long.valueOf(id))
+        } else if (isMediaDocument(uri)) {
+            val docId = DocumentsContract.getDocumentId(uri)
+            val split = docId.split(":".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            val type = split[0]
+            if ("image" == type) {
+                uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+            } else if ("video" == type) {
+                uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            } else if ("audio" == type) {
+                uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+            }
+            selection = "_id=?"
+            selectionArgs = arrayOf(split[1])
+        }
+    }
+    if ("content".equals(uri.scheme!!, ignoreCase = true)) {
+        val projection = arrayOf(MediaStore.Images.Media.DATA)
+        var cursor: Cursor? = null
+        try {
+            cursor = context.contentResolver
+                    .query(uri, projection, selection, selectionArgs, null)
+            val column_index = cursor!!.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+            if (cursor!!.moveToFirst()) {
+                return cursor!!.getString(column_index)
+            }
+        } catch (e: Exception) {
+        }
+
+    } else if ("file".equals(uri.scheme!!, ignoreCase = true)) {
+        return uri.path
+    }
+    return null
+}
+
+fun isExternalStorageDocument(uri: Uri): Boolean {
+    return "com.android.externalstorage.documents" == uri.authority
+}
+
+fun isDownloadsDocument(uri: Uri): Boolean {
+    return "com.android.providers.downloads.documents" == uri.authority
+}
+
+fun isMediaDocument(uri: Uri): Boolean {
+    return "com.android.providers.media.documents" == uri.authority
 }
 
 fun getCommands(text: String, func: (t: String, s: String) -> Unit): List<Command> {

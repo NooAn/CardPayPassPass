@@ -6,6 +6,7 @@ import android.net.Uri
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import java.io.File
 
 
@@ -17,9 +18,13 @@ class NfcService : HostApduService() {
 
     fun getData(context: Context?): List<Command> {
         var list: List<Command> = arrayListOf()
-        if (filePath.isNotBlank()) {
-            Log.e("", "")
-            list = getCommands(Uri.fromFile(File(filePath)).readTextFromUri(context), this::showError)
+        filePath?.let {
+            if (it.isNotBlank()) {
+                Log.e("", "")
+                list = getCommands(Uri.fromFile(File(it)).readTextFromUri(context), this::showError)
+            } else {
+                Toast.makeText(applicationContext, "Not found file path", Toast.LENGTH_SHORT).show()
+            }
         }
         return list
     }
@@ -31,6 +36,10 @@ class NfcService : HostApduService() {
     override fun processCommandApdu(apdu: ByteArray?, bundle: Bundle?): ByteArray {
         Log.i("LOG", "Received APDU: $apdu - String Representation: ${if (apdu != null) String(apdu) else "null"}")
         var index = 0
+
+        val pref = applicationContext!!.getSharedPreferences("EMV", Context.MODE_PRIVATE)
+        filePath = pref.getString("path", "EMV/")
+
         val commands = getData(applicationContext)
         commands.forEachIndexed { i, command ->
             if (apdu?.toHex() == command.getHexString()) {
@@ -42,15 +51,17 @@ class NfcService : HostApduService() {
         return commands[index].split()
     }
 
-    private lateinit var filePath: String
+    private var filePath: String? = ""
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // Check if intent has extras
+        val pref = applicationContext!!.getSharedPreferences("EMV", Context.MODE_PRIVATE)
+        filePath = pref.getString("path", "EMV/")
         if (intent?.getExtras() != null) {
             // Get message
-            filePath = intent.getExtras().getString("path")
+            filePath = if (intent?.getExtras().getString("path") == null) return START_STICKY else intent?.getExtras().getString("path")
         }
-        return START_NOT_STICKY
+        return START_STICKY
     }
 }
 
