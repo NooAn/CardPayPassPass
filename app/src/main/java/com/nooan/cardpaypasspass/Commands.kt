@@ -37,6 +37,8 @@ object Value {
     val SELECT_INS = "A4"
     val DEFAULT_CLA = "00"
     val MIN_APDU_LENGTH = 12
+    val magStripModeEmulated = "77 0A 82 02 00 00 94 04 08 01 01 00 90 00"
+
 }
 
 object Commands {

@@ -20,6 +20,7 @@ import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.nooan.cardpaypasspass.Value.magStripModeEmulated
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.BufferedWriter
 import java.io.File
@@ -128,13 +129,11 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
         }
 
         try {
-            if (commands != null) {
-                readCardWithOurCommands()
-            } else
-                if (mChip)
-                    readCardMChip()
-                else
-                    readCardMagStripe()
+            when {
+                commands != null -> readCardWithOurCommands()
+                mChip -> readCardMChip()
+                else -> readCardMagStripe()
+            }
         } catch (e: IOException) {
             Log.e("EMVemulator", "Error tranceive: " + e.message)
             error = "Reading card data ... Error tranceive: " + e.message
@@ -143,7 +142,6 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
         } finally {
             tagcomm.close()
         }
-
     }
 
     private fun readCardWithOurCommands() {
@@ -182,7 +180,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
         nfcintent = PendingIntent.getActivity(this, 0, Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0)
-        //cardEmulation = CardEmulation.getInstance(nfcAdapter)
+        cardEmulation = CardEmulation.getInstance(nfcAdapter)
         fragmentTransaction(ReaderFragment.newInstance(), ReaderFragment.TAG)
         createDir()
     }
@@ -205,7 +203,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
                 e.printStackTrace()
             }
         }
-        try { //check it fixme
+        try {
             //BufferedWriter for performance, true to set append to file flag
             BufferedWriter(FileWriter(filename, append)).apply {
                 append(text)
@@ -256,7 +254,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
                 SW1WS2 = "00"
             })
 
-            execute(Commands.GET_PROCESSING_OPTIONS)  //Get Processing Options
+            execute(Commands.GET_PROCESSING_OPTIONS)
 
             execute(Commands.READ_RECORD_1)   //Read Record1
 
@@ -281,8 +279,6 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
     }
 
-    protected fun toMagStripeMode() = "77 0A 82 02 00 00 94 04 08 01 01 00 90 00"
-
     private fun readCardMagStripe() {
 
         try {
@@ -300,7 +296,8 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             val cardtype: String = getTypeCard(select.split())
 
             execute(select)
-            appendLog(toMagStripeMode(), filename)
+            execute(Commands.GET_PROCESSING_OPTIONS)
+            appendLog(magStripModeEmulated, filename)
             response = execute(Commands.READ_RECORD_1.apply {
                 P2 = "0C"
                 Lc = "00"

@@ -33,36 +33,34 @@ class NfcService : HostApduService() {
         Log.e("LOG", "OnError in line: $line")
     }
 
+    private var commands: List<Command>? = arrayListOf()
+
     override fun processCommandApdu(apdu: ByteArray?, bundle: Bundle?): ByteArray {
         Log.i("LOG", "Received APDU: $apdu - String Representation: ${if (apdu != null) String(apdu) else "null"}")
         var index = 0
+        if (filePath.isNullOrBlank()) {
+            val pref = applicationContext!!.getSharedPreferences("EMV", Context.MODE_PRIVATE)
+            filePath = pref.getString("path", "EMV/")
+        }
+        if (commands?.isEmpty() == true)
+            commands = getData(applicationContext)
 
-        val pref = applicationContext!!.getSharedPreferences("EMV", Context.MODE_PRIVATE)
-        filePath = pref.getString("path", "EMV/")
-
-        val commands = getData(applicationContext)
-        commands.forEachIndexed { i, command ->
-            if (apdu?.toHex() == command.getHexString()) {
+        commands?.forEachIndexed { i, command ->
+            Log.d("LOG", apdu?.toHex()?.replace("0", "") + " " + command.getHexString().replace("0", ""))
+            if (apdu?.toHex()?.replace("0", "") == command.getHexString().replace("0", "")) {
                 index = i + 1
                 Log.e("LOG", "Found bytes: ${apdu.toHex()}")
-                return@forEachIndexed
+                return commands!![i + 1].split()
             }
+            Log.e("LOG", "Index $index")
         }
-        return commands[index].split()
+
+        Log.e("LOG", "Finnish")
+        return Value.magStripModeEmulated.hexToByteArray()
     }
 
     private var filePath: String? = ""
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Check if intent has extras
-        val pref = applicationContext!!.getSharedPreferences("EMV", Context.MODE_PRIVATE)
-        filePath = pref.getString("path", "EMV/")
-        if (intent?.getExtras() != null) {
-            // Get message
-            filePath = if (intent?.getExtras().getString("path") == null) return START_STICKY else intent?.getExtras().getString("path")
-        }
-        return START_STICKY
-    }
 }
 
 private val HEX_CHARS = "0123456789ABCDEF"
