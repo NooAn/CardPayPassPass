@@ -1,14 +1,13 @@
 package com.nooan.cardpaypasspass
 
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import java.io.File
 
+
+const val COMMANDS = "commands"
 
 class NfcService : HostApduService() {
 
@@ -16,14 +15,14 @@ class NfcService : HostApduService() {
         Log.e("LOG onDEACTIVATED", reason.toString());
     }
 
-    fun getData(context: Context?): List<Command> {
+    fun getData(): List<Command> {
         var list: List<Command> = arrayListOf()
-        filePath?.let {
+        commandText?.let {
             if (it.isNotBlank()) {
                 Log.e("", "")
-                list = getCommands(Uri.fromFile(File(it)).readTextFromUri(context), this::showError)
+                list = getCommands(it, this::showError)
             } else {
-                Toast.makeText(applicationContext, "Not found file path", Toast.LENGTH_SHORT).show()
+                Toast.makeText(applicationContext, "Not found text for commands", Toast.LENGTH_SHORT).show()
             }
         }
         return list
@@ -38,12 +37,12 @@ class NfcService : HostApduService() {
     override fun processCommandApdu(apdu: ByteArray?, bundle: Bundle?): ByteArray {
         Log.i("LOG", "Received APDU: $apdu - String Representation: ${if (apdu != null) String(apdu) else "null"}")
         var index = 0
-        if (filePath.isNullOrBlank()) {
+        if (commandText.isNullOrBlank()) {
             val pref = applicationContext!!.getSharedPreferences("EMV", Context.MODE_PRIVATE)
-            filePath = pref.getString("path", "EMV/")
+            commandText = pref.getString(COMMANDS, "EMV/")
         }
         if (commands?.isEmpty() == true)
-            commands = getData(applicationContext)
+            commands = getData()
 
         commands?.forEachIndexed { i, command ->
             Log.d("LOG", apdu?.toHex()?.replace("0", "") + " " + command.getHexString().replace("0", ""))
@@ -59,8 +58,7 @@ class NfcService : HostApduService() {
         return Value.magStripModeEmulated.hexToByteArray()
     }
 
-    private var filePath: String? = ""
-
+    private var commandText: String? = ""
 }
 
 private val HEX_CHARS = "0123456789ABCDEF"

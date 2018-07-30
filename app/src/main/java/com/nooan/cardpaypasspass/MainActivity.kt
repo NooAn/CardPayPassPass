@@ -162,7 +162,6 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             R.id.navigation_logs -> {
                 fragmentTransaction(LogsFragment.newInstance(listLogs), LogsFragment.TAG)
                 sendLogsToParseLog(listLogs)
-
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_reads -> {
@@ -239,10 +238,11 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
     }
 
     val unixTime = System.currentTimeMillis() / 1000L
-    val filename = unixTime.toString() + "-MChip.card"
+    var filename = "Test"
     var mChip: Boolean = false
 
     private fun readCardMChip() {
+        filename = unixTime.toString() + "-MChip.card"
         try {
             Log.e("LOG", "MChip")
             appendLog("MChip", filename)
@@ -283,8 +283,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
         try {
             val unixTime = System.currentTimeMillis() / 1000L
-            val filename = unixTime.toString() + "MagStripe.card"
-            appendLog("MagStripe", filename)
+            filename = unixTime.toString() + "MagStripe.card"
 
             var response = execute(Commands.SELECT_PPSE)
 
@@ -299,14 +298,18 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             execute(Commands.GET_PROCESSING_OPTIONS)
             appendLog(magStripModeEmulated, filename)
             response = execute(Commands.READ_RECORD_1.apply {
-                P2 = "0C"
-                Lc = "00"
-                Le = ""
-                Nc = ""
+                //    P2 = "0C" // why we change it?
+                //    Lc = "00"
+                //   Le = ""
+                //   Nc = ""
             })
 
             if (cardtype === "MasterCard") {
 
+                if (response.toHex().length < 190) {
+                    showLogs("Finish; ${response.toHex()}\n\n\n\n\n")
+                    return
+                }
                 cardnumber = "Card number: ${response.getCards()}"
                 cardexpiration = "Card expiration: ${response.getExpired()}"
 

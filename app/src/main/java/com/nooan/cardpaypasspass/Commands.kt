@@ -19,7 +19,9 @@ data class Command(
                                             3 bytes (if Lc was not present in the command), the first of which must be 0, denote Ne in the same way as two-byte Le*/
         var Nr: String = "", // response data, FCI or empty
         var SW1WS2: String = "" // 9000 (success or specific status bytes
+
 ) {
+
     fun split(): ByteArray {
         return getHexString().hexToByteArray()
     }

@@ -76,9 +76,7 @@ class ReadFileFragment : Fragment() {
         btnSendToService.setOnClickListener {
             val path = getFilePath(activity?.baseContext!!, uri ?: return@setOnClickListener)
             val pref = activity!!.getSharedPreferences("EMV", Context.MODE_PRIVATE)
-            val editor = pref.edit()
-            editor.putString("path", path)
-            editor.apply()
+            pref.edit().putString(COMMANDS, etCommandLine.text.toString()).apply()
         }
     }
 
