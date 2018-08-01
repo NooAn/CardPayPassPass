@@ -307,7 +307,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             if (cardtype === "MasterCard") {
 
                 if (response.toHex().length < 190) {
-                    showLogs("Finish; ${response.toHex()}\n\n\n\n\n")
+                    showLogs("length < 190; ${response.toHex()}\n\n\n\n\n")
                     return
                 }
                 cardnumber = "Card number: ${response.getCards()}"
@@ -421,7 +421,6 @@ fun String.makePair(): String? {
     var stringBuilder = StringBuilder()
     for (i in 1..this.length - 1 step 2) {
         stringBuilder.append(this.get(i - 1)).append(this.get(i)).append(" ")
-
     }
     return stringBuilder.toString()
 }
