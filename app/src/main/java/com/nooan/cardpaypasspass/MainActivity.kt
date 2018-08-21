@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
         log += "\n$text"
         val fragment = supportFragmentManager.findFragmentByTag(ReaderFragment.TAG)
         if (fragment != null) {
-            (fragment as ReaderFragment).showLogs(log)
+            (fragment as ReaderFragment).showLogs(log, filename)
         }
     }
 
@@ -298,10 +298,10 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             execute(Commands.GET_PROCESSING_OPTIONS)
             appendLog(magStripModeEmulated, filename)
             response = execute(Commands.READ_RECORD_1.apply {
-                //    P2 = "0C" // why we change it?
-                //    Lc = "00"
-                //   Le = ""
-                //   Nc = ""
+                P2 = "0C" // why we change it?
+                Lc = "00"
+                Le = ""
+                Nc = ""
             })
 
             if (cardtype === "MasterCard") {
@@ -315,7 +315,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
 
                 showData()
 
-                for (i in 0..3) {
+                for (i in 0..999) {
                     execute(Commands.GET_PROCESSING_OPTIONS, false)
                     execute(Commands.COMPUTE_CRYPTOGRAPHIC_CHECKSUM.apply {
                         Lc = "04"
@@ -323,6 +323,7 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
                     })
                     Log.i("EMVemulator", "Count:" + i.toString())
                     if (i % 1 == 0) {
+                        showLogs("<b><h4><font color=#666>$i</font></h4></b>")
                     }
                 }
                 showLogs("<b><b></b></b>")
@@ -339,7 +340,6 @@ class MainActivity : AppCompatActivity(), OnFragmentInteractionListener {
             Log.i("EMVemulator", "Error readCard: " + e.message)
             error = "Reading card data ... Error readCard: " + e.message
         }
-
     }
 
     private fun finishRead() {

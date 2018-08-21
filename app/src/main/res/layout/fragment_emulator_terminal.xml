@@ -50,6 +50,13 @@
             android:text="READ"
             app:layout_constraintTop_toBottomOf="@id/txDescription" />
 
+        <TextView
+            android:id="@+id/txtFileSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:text="Save in file:"
+            app:layout_constraintTop_toBottomOf="@+id/btnRead" />
 
         <TextView
             android:id="@+id/tvLogs"
@@ -58,7 +65,7 @@
             android:layout_marginBottom="10dp"
             android:text="..."
             android:textColor="#000"
-            app:layout_constraintTop_toBottomOf="@+id/btnRead" />
+            app:layout_constraintTop_toBottomOf="@+id/txtFileSave" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.core.widget.NestedScrollView>
 

@@ -52,6 +52,7 @@ class ReaderFragment : Fragment() {
         checkboxChip.setOnClickListener {
             (activity as MainActivity).mChip = checkboxChip.isChecked
         }
+
     }
 
     override fun onAttach(context: Context) {
@@ -62,6 +63,8 @@ class ReaderFragment : Fragment() {
             throw RuntimeException(context.toString() + " must implement OnFragmentInteractionListener")
         }
     }
+
+    val text = "Name of file:"
 
     override fun onDetach() {
         super.onDetach()
@@ -82,8 +85,9 @@ class ReaderFragment : Fragment() {
         btnRead.text = "READ"
     }
 
-    fun showLogs(text: String) {
-        tvLogs.text = Html.fromHtml("<p> $text <p> ")
+    fun showLogs(logText: String, filename: String) {
+        txtFileSave.text = "$text $filename"
+        tvLogs.text = Html.fromHtml("<p> $logText <p> ")
     }
 
     fun showData(cardnumber: String, cardexpiration: String) {
